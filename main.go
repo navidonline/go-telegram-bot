@@ -21,8 +21,7 @@ func main() {
 	}
 
 	b.Handle("/hello", func(c tele.Context) error {
-		c.Reply("salam")
-		b.Send(c.Sender(), fmt.Sprint("salaaam", " ", c.Sender().FirstName))
+		c.Reply(fmt.Sprint("salam", " ", c.Sender().FirstName))
 		return nil
 	})
 	fmt.Println("Bot started...")
