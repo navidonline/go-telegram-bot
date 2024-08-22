@@ -7,6 +7,6 @@ RUN go mod download
 
 COPY . ./
 
-RUN CGO_ENABLED=1 GOOS=linux go build -v -o server -a -ldflags '-linkmode external -extldflags "-static"' .
+RUN go build -v -o server
 
 CMD [ "/app/server" ]
