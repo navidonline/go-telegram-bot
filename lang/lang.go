@@ -37,6 +37,9 @@ func (l *Lang) T(id string, data ...*map[string]any) string {
 	if len(data) > 0 {
 		config.TemplateData = data[0]
 	}
-	text, _ := l.localizer.Localize(&config)
+	text, err := l.localizer.Localize(&config)
+	if err!=nil{
+		print(err.Error())
+	}
 	return text
 }
