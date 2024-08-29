@@ -23,7 +23,10 @@ func Init() *Lang {
 func newBundle() *i18n.Bundle {
 	bundle := i18n.NewBundle(language.Persian)
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
-	bundle.LoadMessageFile("fa.json")
+	_, err:=bundle.LoadMessageFile("fa.json")
+	if err!=nil{
+		panic(err.Error())
+	}
 	return bundle
 }
 
