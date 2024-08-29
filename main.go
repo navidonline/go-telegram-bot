@@ -98,7 +98,7 @@ func handleGetAllUsers(cfg *Config) {
 	cfg.Bot.Handle("/users", func(c tele.Context) error {
 		var users []database.TelegramUser
 		cfg.Database.Db.Find(&users)
-		result := ""
+		result := cfg.T("users_empty_msg")
 		for _, user := range users {
 			result += fmt.Sprintf("%v- %v	Name:%v	UserName:%v	ref:%v\n", user.ID, user.UserId, user.FirstName+" "+user.LastName, user.Username,user.RefId)
 		}

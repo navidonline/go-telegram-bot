@@ -1,4 +1,5 @@
 {
     "trans_received_msg":"{{.Name}} عزیز، تراکنش شماره {{.Id}} دریافت شد و در حال پردازش است",
-    "welcome_message":"سلام {{.Name}} خوش آمدید"
+    "welcome_message":"سلام {{.Name}} خوش آمدید",
+    "users_empty_msg":"هیچ کاربری وجود ندارد"
 }
