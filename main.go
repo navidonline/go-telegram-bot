@@ -3,18 +3,25 @@ package main
 import (
 	"fmt"
 	"go-telegram-bot/database"
+	"go-telegram-bot/lang"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-func main() {
+type Config struct {
+	*database.Database
+	*lang.Lang
+	*tele.Bot
+}
 
-	db := database.NewDb()
+func main() {
 
 	pref := tele.Settings{
 		Token:  os.Getenv("TOKEN"),
@@ -27,37 +34,80 @@ func main() {
 		return
 	}
 
-	handleStart(b, db)
+	cfg := Config{
+		Database: database.NewDb(),
+		Lang:     lang.Init(),
+		Bot:      b,
+	}
 
-	handleGetAllUsers(b, db)
+	handleStart(&cfg)
 
-	handleGetJson(b)
+	handleGetAllUsers(&cfg)
+
+	handleGetJson(&cfg)
 
 	fmt.Println("Bot started...")
 	b.Start()
 }
 
-func handleStart(b *tele.Bot, db *database.Database) {
-	b.Handle("/start", func(c tele.Context) error {
-		db.Db.Create(&database.TelegramUser{UserId: c.Sender().ID, FirstName: c.Sender().FirstName, LastName: c.Sender().LastName, Username: c.Sender().Username})
-		return c.Send(fmt.Sprint("سلام", " ", c.Sender().FirstName, " ", "خوش آمدید"))
+func handleStart(cfg *Config) {
+	cfg.Bot.Handle("/start", func(c tele.Context) error {
+		payload := c.Message().Payload
+		var refId int64
+		var transId int64
+		if payload != "" {
+			if strings.HasPrefix(payload, "tr") {
+				tr, _ := strings.CutPrefix(payload, "tr")
+				transId, _ = strconv.ParseInt(tr, 0, 64)
+			}
+			if strings.HasPrefix(payload, "ref") {
+				ref, _ := strings.CutPrefix(payload, "ref")
+				refId, _ = strconv.ParseInt(ref, 0, 64)
+			}
+		}
+
+		cfg.Database.Db.FirstOrCreate(&database.TelegramUser{
+			UserId:       c.Sender().ID,
+			RefId:        refId,
+			FirstName:    c.Sender().FirstName,
+			LastName:     c.Sender().LastName,
+			Username:     c.Sender().Username,
+			LanguageCode: c.Sender().LanguageCode,
+			IsBot:        c.Sender().IsBot,
+			IsPremium:    c.Sender().IsPremium,
+		})
+
+		if transId > 0 {
+			return c.Send(cfg.T("trans_received_msg", &map[string]any{"Name": getUserTitle(c.Sender()), "Id": transId}))
+		}
+
+		return c.Send(getWelcomeMessage(cfg, c.Sender()))
+
 	})
 }
 
-func handleGetAllUsers(b *tele.Bot, db *database.Database) {
-	b.Handle("/users", func(c tele.Context) error {
+func getWelcomeMessage(cfg *Config, user *tele.User) string {
+	return cfg.T("welcome_message", &map[string]any{"Name": getUserTitle(user)})
+}
+
+func getUserTitle(user *tele.User) string {
+	return user.FirstName + " " + user.LastName
+}
+
+func handleGetAllUsers(cfg *Config) {
+	cfg.Bot.Handle("/users", func(c tele.Context) error {
 		var users []database.TelegramUser
-		db.Db.Find(&users)
-		result:=""
-		for _,user:=range users{
-			result+=fmt.Sprintf("%v- ID:%v	UserName:%v\n",user.ID,user.UserId,user.Username)
+		cfg.Database.Db.Find(&users)
+		result := ""
+		for _, user := range users {
+			result += fmt.Sprintf("%v- %v	Name:%v	UserName:%v	ref:%v\n", user.ID, user.UserId, user.FirstName+" "+user.LastName, user.Username,user.RefId)
 		}
 		return c.Send(result)
 	})
 }
 
-func handleGetJson(b *tele.Bot) {
-	b.Handle("/json", func(c tele.Context) error {
+func handleGetJson(cfg *Config) {
+	cfg.Bot.Handle("/json", func(c tele.Context) error {
 		resp, err := http.Get("https://reqres.in/api/users?page=1")
 		if err != nil {
 			return c.Reply("No response from request")
