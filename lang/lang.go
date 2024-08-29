@@ -40,6 +40,7 @@ func (l *Lang) T(id string, data ...*map[string]any) string {
 	text, err := l.localizer.Localize(&config)
 	if err!=nil{
 		print(err.Error())
+		return id
 	}
 	return text
 }
