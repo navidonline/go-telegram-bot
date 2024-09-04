@@ -23,8 +23,8 @@ func Init() *Lang {
 func newBundle() *i18n.Bundle {
 	bundle := i18n.NewBundle(language.Persian)
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
-	_, err:=bundle.LoadMessageFile("fa.json")
-	if err!=nil{
+	_, err := bundle.LoadMessageFile("fa.json")
+	if err != nil {
 		panic(err.Error())
 	}
 	return bundle
@@ -38,7 +38,7 @@ func (l *Lang) T(id string, data ...*map[string]any) string {
 		config.TemplateData = data[0]
 	}
 	text, err := l.localizer.Localize(&config)
-	if err!=nil{
+	if err != nil {
 		print(err.Error())
 		return id
 	}
